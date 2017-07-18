@@ -1,0 +1,11 @@
+
+
+platform:osx,’10.12’
+use_frameworks!
+target ‘Service’ do
+
+ pod 'Protobuf', '~> 3.3.0'
+end
+
+
+

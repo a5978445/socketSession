@@ -1,0 +1,52 @@
+
+syntax = "proto3";
+message Box {
+
+	enum Service {
+		heartBeat = 0;
+        sendMesaage = 1;
+        sendMesaageResponse = 2;
+        getPicture = 3;
+        getPictureResponse = 4;
+    }
+
+	enum Code {
+		sucess = 0;
+		authError = 1;
+	}
+
+     Code code = 1;
+
+     string msg = 2;
+	 Service service = 3;
+
+	// 响应报文
+	oneof  dataAck{
+    		SendMessageRequest sendMessageRequest = 11;
+        	GetPictureRequest getPictureRequest = 12;
+  
+	}
+
+	// 发送报文
+	oneof  dataRequest{
+    		SendMessageAck sendMessageAck = 51;
+			GetPictureAck getPictureAck = 52;
+  
+	}
+}
+
+message SendMessageRequest {
+	string message = 1;
+}
+
+message SendMessageAck {
+	string ackMessage = 1;
+}
+
+message GetPictureRequest {
+	string url = 1;
+}
+
+message GetPictureAck {
+	bytes pictureData = 1;
+}
