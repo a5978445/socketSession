@@ -13,6 +13,7 @@
 
 @implementation DataService
 
+// 检验头部是否非法
 + (BOOL)isValideWithData:(NSData *)data {
     if (data.length >= 3) {
         NSData *headData = [data subdataWithRange:NSMakeRange(0, 3)];
@@ -27,6 +28,7 @@
     }
 }
 
+//解析包的长度
 + (NSRange)parsingLength:(NSData *)data {
     if (data.length < 8) {
         return NSMakeRange(NSNotFound, 0);
@@ -45,6 +47,7 @@
     }
 }
 
+// 检验该包的结束标志位
 + (BOOL)isFinsh:(NSData *)data {
     if (data.length < 8) {
         return NO;
@@ -110,22 +113,7 @@
     }
 }
 
-+ (NSArray<NSData *> *)getDatasWithData:(NSData *)data {
-    NSData *aData = [data copy];
-    NSMutableArray *result = [NSMutableArray new];
-    while (aData.length > KMaxDataLength) {
-        NSData *tempData = [aData subdataWithRange:NSMakeRange(0, KMaxDataLength)];
-        [result addObject:tempData];
-        NSRange range = NSMakeRange(KMaxDataLength, aData.length - KMaxDataLength);
-        NSUInteger length = aData.length;
-        
-        NSUInteger tag = KMaxDataLength;
-        
-        aData = [aData subdataWithRange:NSMakeRange(KMaxDataLength, aData.length - KMaxDataLength)];
-    }
-    [result addObject:aData];
-    return result;
-}
+
 
 
 + (NSData *)packageData:(NSData *)data {
@@ -148,17 +136,33 @@
   
 }
 
-+ (NSData *)packageElementData:(NSData *)data isFinish:(BOOL)isFinish {
-    Byte head[3] = {0x2a,0x23,0x23};
-    Byte flag[1];
-    if ( isFinish) {
-        flag[0] = 0x01;
-    } else {
-        flag[0] = 0x00;
+#pragma mark -- private method
+
+// 将包切成若干个更小的包
++ (NSArray<NSData *> *)getDatasWithData:(NSData *)data {
+    NSData *aData = [data copy];
+    NSMutableArray *result = [NSMutableArray new];
+    while (aData.length > KMaxDataLength) {
+        NSData *tempData = [aData subdataWithRange:NSMakeRange(0, KMaxDataLength)];
+        [result addObject:tempData];
+        NSRange range = NSMakeRange(KMaxDataLength, aData.length - KMaxDataLength);
+        NSUInteger length = aData.length;
+        
+        NSUInteger tag = KMaxDataLength;
+        
+        aData = [aData subdataWithRange:NSMakeRange(KMaxDataLength, aData.length - KMaxDataLength)];
     }
+    [result addObject:aData];
+    return result;
+}
+
+// 封包
++ (NSData *)packageElementData:(NSData *)data isFinish:(BOOL)isFinish {
+   
+   
     
-    NSData *headData = [NSData dataWithBytes:head length:3];
-    NSData *flagData = [NSData dataWithBytes:flag length:1];
+    NSData *headData = [self standardData];
+    NSData *flagData = [NSData dataWithBytes:&isFinish length:1];
     
     int32_t length = htonl(data.length);
     NSData *lenthData = [NSData dataWithBytes:&length length:4];
@@ -174,7 +178,8 @@
 
 
 
-#pragma mark - private method
+
+// 头部信息
 + (NSData *)standardData {
     Byte head[3] = {0x2a,0x23,0x23};
     NSData *headData = [NSData dataWithBytes:head length:3];

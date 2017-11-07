@@ -84,6 +84,7 @@ static SocketServiceManger *share;
         
         SocketService *aSocketService = [self findSocketService];
         if (aSocketService == nil && self.socketServices.count < kMaxSocket) {
+            NSLog(@"创建新的socket");
             aSocketService = [SocketService SocketServiceWithDelegateQueue:responseQueue];
             
             __weak typeof(SocketService *) weakSocketService = aSocketService;
@@ -120,15 +121,17 @@ static SocketServiceManger *share;
 }
 
 - (void)sendModel:(RequestModel *)model socketService:(SocketService *) aSocketService {
-    dispatch_async(requestQueue, ^{
+ 
         __weak typeof(self) weakSelf = self;
         
         assert(model.block!=nil);
+     //   NSLog(@"model.box = %@", model.box);
         [aSocketService sendBox:model.box responseBlock:^(Box *box, NSError *failureError) {
-        //    @synchronized(model) {
-                model.box = box;
-                model.block(box,failureError);
-         //   }
+            
+            model.box = box;
+            model.block(box,failureError);
+            
+            
             RequestModel *firstModel = weakSelf.models.firstObject;
             
             if (firstModel) {
@@ -137,13 +140,15 @@ static SocketServiceManger *share;
             }
             
         }];
-    });
+  
 }
 
 - (SocketService *)findSocketService {
     for (SocketService *service in self.socketServices) {
         if (!service.isBusy) {
             return service;
+        } else {
+           // NSLog(@"service 正忙");
         }
     }
     return nil;

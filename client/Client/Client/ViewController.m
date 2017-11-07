@@ -60,19 +60,22 @@
     
     
     __weak typeof(self) weakSelf = self;
-    for (int i = 0; i < 100; i++) {
+   // for (int i = 0; i < 100; i++) {
         [SocketServiceManger.shareManager sendBox:box responseBlock:^(Box *box, NSError *failureError) {
             if (failureError == nil) {
               //  NSLog(@"%@",box.getPictureAck);
                 NSLog(@"成功接收！");
                 
+                dispatch_async(dispatch_get_main_queue(), ^{
+                     [weakSelf.imageView setImage:[[NSImage alloc]initWithData:box.getPictureAck.pictureData]];
+                });
                 
-                [weakSelf.imageView setImage:[[NSImage alloc]initWithData:box.getPictureAck.pictureData]];
+               
             } else {
                 NSLog(@"%@",failureError);
             }
         }];
-    }
+   // }
    
     
 }

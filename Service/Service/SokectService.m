@@ -106,15 +106,16 @@
                         _receiveData = [[_receiveData subdataWithRange:NSMakeRange(range.location + range.length, _receiveData.length - range.location - range.length)] mutableCopy];
                         [userData.fileData appendData:elementData];
                         
+                        Box *box = [Box parseFromData:[userData.fileData copy] error:nil];
                         if (isFinsh) {
                             
-                            Box *box = [Box parseFromData:[userData.fileData copy] error:nil];
+                            
                             
                             
                             if (box.service == Box_Service_HeartBeat) {
                                 NSLog(@"这是一个心跳包！");
                             } else {
-                                
+                                NSLog(@"box = %@",box);
                                 NSData *bodyData = [self dealData:userData.fileData ];
                                 [sock writeData:[DataService packageData:bodyData] withTimeout:-1 tag:0];
                                 

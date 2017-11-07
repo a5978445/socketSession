@@ -123,11 +123,15 @@
         self.box = box;
         
         if (_socket.isConnected) {
-            [_socket writeData:[DataService packageData:box.data] withTimeout:-1 tag:0];
+            
+            [self writeDataWithBox:box];
+            
             [_socket readDataWithTimeout:-1 tag:0];
             
             SocketUserData *userData = _socket.userData;
             [userData delayFreeTriggerTimer];
+        } else {
+          //  assert(0);
         }
     }
 
@@ -150,12 +154,12 @@
     //这里的sock指客户端的Socket
     // NSLog(@"%@", sock);
     SocketUserData *userData = ((SocketUserData *)sock.userData);
-    NSMutableData *_receiveData = userData.receiveData;
-    [_receiveData appendData:data];
+    NSMutableData *receiveData = userData.receiveData;
+    [receiveData appendData:data];
     
     
     NSError *error;
-    NSData *waitPasingData = _receiveData;
+    NSData *waitPasingData = receiveData;
     BOOL isFinsh = NO;
     
     
@@ -165,19 +169,15 @@
             [userData.fileData appendData:parsedData];
             if (isFinsh) {
                 
-                
                 Box *box = [Box parseFromData:userData.fileData error:nil];
                 userData.fileData = [NSMutableData new];
                 if (box.service == Box_Service_HeartBeat) {
                     NSLog(@"这是一个心跳包");
                 } else {
                     
-                 //   @synchronized (self) {
-                        self.box = nil;
-                        self.isBusy = NO;
-                        self.block(box, nil);
-                 //  }
-                    
+                    self.box = nil;
+                    self.isBusy = NO;
+                    self.block(box, nil);
                     
                 }
                 
@@ -193,13 +193,13 @@
                 case ParsingErrorType_formatError:
                     [self disConectSocket:sock];
                     [self performSelector:@selector(restartSocket:)
-                                   withObject:sock
-                                   afterDelay:_fallbackMechanism.fallBackTime];
+                               withObject:sock
+                               afterDelay:_fallbackMechanism.fallBackTime];
                     self.box = nil;
                     self.isBusy = NO;
                     self.block(nil, [NSError errorWithDomain:@"数据解析失败" code:-999 userInfo:nil]);
                     break;
-                    case ParsingErrorType_noData:
+                case ParsingErrorType_noData:
                     [sock readDataWithTimeout:-1 tag:tag];
                     break;
                 default:
@@ -207,18 +207,19 @@
             }
         }
     }
-    _receiveData = [waitPasingData mutableCopy];
-    userData.receiveData = _receiveData;
+    receiveData = [waitPasingData mutableCopy];
+    userData.receiveData = receiveData;
 }
 
 - (void)socket:(GCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(uint16_t)port {
     __weak GCDAsyncSocket *weakNewSocket = sock;
     __weak typeof(self) weakSelf = self;
     sock.userData = [[SocketUserData alloc]initWithHeartTimerBlock:^(NSTimer *timer) {
+        // 发送心跳包
         Box *heartBox =  [Box new];
         heartBox.service = Box_Service_HeartBeat;
         
-        [weakNewSocket writeData:[DataService packageData:heartBox.data] withTimeout:-1 tag:0];
+        [weakSelf writeDataWithBox:heartBox];
     } disConectTimer:^(NSTimer *timer) {
         NSLog(@"连接超时！");
         
@@ -232,12 +233,13 @@
         }
     }];
     
-    
+    //重置会退机制指针
     [_fallbackMechanism reset];
     [sock readDataWithTimeout:-1 tag:0];
     
     if (self.box) {
-        [_socket writeData:[DataService packageData:self.box.data] withTimeout:-1 tag:0];
+      
+        [self writeDataWithBox:self.box];
         [_socket readDataWithTimeout:-1 tag:0];
     }
    
@@ -284,12 +286,12 @@
     [_fallbackMechanism fallBack];
 }
 
-- (void)sendHeartData {
-    NSData *bodyData = [NSData data];
-    
-    [_socket writeData:[DataService packageData:bodyData] withTimeout:-1 tag:0];
-  //  [_socket readDataWithTimeout:-1 tag:0];
+- (void)writeDataWithBox:(Box *)box {
+  //  NSLog(@"service.box = %@", box);
+     [_socket writeData:[DataService packageData:box.data] withTimeout:-1 tag:0];
 }
+
+
 
 
 @end

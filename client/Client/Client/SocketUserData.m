@@ -25,27 +25,19 @@
     if (self) {
         _receiveData = [NSMutableData new];
         _fileData = [NSMutableData new];
-      
-     //   _heartTimer = [NSTimer scheduledTimerWithTimeInterval:kHeartTime
-      //                                                repeats:YES
-      //                                                  block:heartTimerBlock];
-       _heartTimer = [NSTimer timerWithTimeInterval:kHeartTime repeats:YES block:heartTimerBlock];
-        
-       
         
         
-//        _disConectTimer = [NSTimer scheduledTimerWithTimeInterval:kDisconectTime
-//                                                          repeats:YES
-//                                                            block:disConectTimer];
+        _heartTimer = [NSTimer timerWithTimeInterval:kHeartTime repeats:YES block:heartTimerBlock];
+        
+        
         _disConectTimer = [NSTimer timerWithTimeInterval:kDisconectTime
-                                                          repeats:YES
-                                                            block:disConectTimer];
+                                                 repeats:YES
+                                                   block:disConectTimer];
         
         _FreeTriggerTimer = [NSTimer timerWithTimeInterval:kFreeTime
-                                                 repeats:YES
-                                                   block:freeTriggerTimerBlock];
+                                                   repeats:YES
+                                                     block:freeTriggerTimerBlock];
         
-     //   [[NSRunLoop currentRunLoop] run];
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
             [[NSRunLoop currentRunLoop] addTimer:_heartTimer forMode:NSRunLoopCommonModes];
             [[NSRunLoop currentRunLoop] addTimer:_disConectTimer forMode:NSRunLoopCommonModes];
